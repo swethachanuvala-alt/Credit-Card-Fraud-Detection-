@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FraudShield · Credit Card Fraud Detector</title>
+<style>
+  :root{
+    --bg1:#1b1146; --bg2:#3a1c71; --bg3:#0f4c81;
+    --card:rgba(255,255,255,.09); --line:rgba(255,255,255,.18);
+    --text:#f5f3ff; --muted:#c4bdea;
+    --pink:#ff5fa2; --violet:#8b5cf6; --cyan:#22d3ee; --lime:#a3e635; --amber:#fbbf24; --red:#ff4d6d; --green:#34d399;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text);min-height:100vh;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
+    background-attachment:fixed;overflow-x:hidden;
+  }
+  .blob{position:fixed;border-radius:50%;filter:blur(80px);opacity:.45;z-index:0;pointer-events:none}
+  .b1{width:380px;height:380px;background:var(--pink);top:-100px;left:-80px}
+  .b2{width:420px;height:420px;background:var(--cyan);bottom:-140px;right:-100px}
+  .b3{width:300px;height:300px;background:var(--violet);top:40%;left:45%}
+  .wrap{position:relative;z-index:1;max-width:1150px;margin:0 auto;padding:28px 20px 50px}
+  header{text-align:center;margin-bottom:26px}
+  .logo{font-size:46px;filter:drop-shadow(0 0 18px rgba(34,211,238,.7))}
+  h1{font-size:clamp(28px,4.5vw,44px);font-weight:800;letter-spacing:.5px;
+     background:linear-gradient(90deg,var(--cyan),var(--pink),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);margin-top:6px}
+  .badges{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:16px}
+  .badge{padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--card);backdrop-filter:blur(8px)}
+  .badge b{color:var(--lime)}
+  .grid{display:grid;grid-template-columns:1.25fr 1fr;gap:22px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:26px;backdrop-filter:blur(14px);box-shadow:0 20px 50px rgba(0,0,0,.28)}
+  .card h2{font-size:18px;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+  .presets{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+  .pbtn{cursor:pointer;border:none;padding:9px 16px;border-radius:12px;font-weight:700;font-size:13px;color:#fff;transition:.2s}
+  .pbtn:hover{transform:translateY(-2px)}
+  .safe{background:linear-gradient(90deg,#10b981,#06b6d4)}
+  .sus{background:linear-gradient(90deg,#f43f5e,#f59e0b)}
+  .reset{background:rgba(255,255,255,.15)}
+  .field{margin-bottom:20px}
+  .field label{display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px;margin-bottom:8px}
+  .val{padding:2px 12px;border-radius:999px;font-size:13px;font-weight:700;background:linear-gradient(90deg,var(--violet),var(--pink))}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:560px){.row2{grid-template-columns:1fr}}
+  input[type=number]{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--text);font-size:16px;outline:none}
+  input[type=number]:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.25)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:8px;background:rgba(255,255,255,.18);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--pink));border:2px solid #fff;cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--pink);border:2px solid #fff;cursor:pointer}
+  .chips{display:flex;flex-wrap:wrap;gap:10px}
+  .chip{cursor:pointer;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--text);font-size:14px;font-weight:600;transition:.2s}
+  .chip:hover{transform:translateY(-2px)}
+  .chip.active{background:linear-gradient(90deg,var(--violet),var(--pink));border-color:transparent;box-shadow:0 6px 18px rgba(139,92,246,.45)}
+  .toggle{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.2);cursor:pointer;user-select:none;font-weight:600;font-size:14px}
+  .switch{width:46px;height:26px;border-radius:26px;background:rgba(255,255,255,.2);position:relative;transition:.25s;flex:none}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s}
+  .toggle.on .switch{background:linear-gradient(90deg,var(--amber),var(--red))}
+  .toggle.on .switch::after{left:23px}
+  .go{width:100%;margin-top:6px;padding:16px;border:none;border-radius:16px;cursor:pointer;font-size:18px;font-weight:800;color:#fff;
+      background:linear-gradient(90deg,var(--violet),var(--pink),var(--amber));background-size:200% 100%;transition:.4s;box-shadow:0 10px 28px rgba(255,95,162,.4)}
+  .go:hover{background-position:100% 0;transform:translateY(-2px)}
+  .go:disabled{opacity:.6;cursor:wait}
+  .result{text-align:center;position:sticky;top:20px}
+  .gauge{position:relative;width:240px;height:240px;margin:6px auto 10px}
+  .gauge svg{transform:rotate(-90deg)}
+  .gauge .track{stroke:rgba(255,255,255,.14)}
+  .gauge .bar{transition:stroke-dashoffset .9s ease,stroke .5s}
+  .gcenter{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .pct{font-size:46px;font-weight:800}
+  .plabel{font-size:12px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+  .verdict{margin:8px auto 4px;padding:14px 18px;border-radius:16px;font-size:20px;font-weight:800}
+  .verdict.idle{background:rgba(255,255,255,.1);color:var(--muted);font-size:16px;font-weight:600}
+  .verdict.ok{background:linear-gradient(90deg,#059669,#10b981);box-shadow:0 8px 24px rgba(16,185,129,.4)}
+  .verdict.bad{background:linear-gradient(90deg,#e11d48,#f97316);box-shadow:0 8px 24px rgba(244,63,94,.5);animation:pulse 1.2s infinite}
+  @keyframes pulse{50%{transform:scale(1.03)}}
+  .risk{margin-top:10px;color:var(--muted);font-size:14px}
+  .risk b{color:var(--text)}
+  .factors{margin-top:18px;text-align:left;font-size:13px;color:var(--muted)}
+  .factors div{padding:7px 10px;border-radius:10px;background:rgba(0,0,0,.2);margin-top:6px}
+  .error{color:#ffb4c1;margin-top:12px;font-weight:600;min-height:20px;text-align:center}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:26px}
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+<div class="wrap">
+  <header>
+    <div class="logo">🛡️</div>
+    <h1>FraudShield</h1>
+    <p class="sub">Enter the transaction details and let the model decide: genuine or fraud?</p>
+    <div class="badges">
+      <span class="badge">🤖 {{ meta.model_name }}</span>
+      <span class="badge">Accuracy <b>{{ (meta.metrics.accuracy * 100)|round(1) }}%</b></span>
+      <span class="badge">Recall <b>{{ (meta.metrics.recall * 100)|round(1) }}%</b></span>
+      <span class="badge">Precision <b>{{ (meta.metrics.precision * 100)|round(1) }}%</b></span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- INPUT -->
+    <section class="card">
+      <h2>💳 Transaction details</h2>
+      <div class="presets">
+        <button class="pbtn safe" type="button" onclick="preset('safe')">✅ Try a normal one</button>
+        <button class="pbtn sus" type="button" onclick="preset('sus')">🚨 Try a suspicious one</button>
+        <button class="pbtn reset" type="button" onclick="preset('reset')">↺ Reset</button>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="amount">💰 Amount</label>
+          <input type="number" id="amount" min="0" step="0.01" value="120">
+        </div>
+        <div class="field">
+          <label>🕒 Hour of day <span class="val" id="hour_v">12:00</span></label>
+          <input type="range" id="hour" min="0" max="23" value="12">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>🛍️ Merchant category</label>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <div class="toggle" id="foreign" onclick="flip(this)"><span>🌍 Foreign transaction</span><span class="switch"></span></div>
+        </div>
+        <div class="field">
+          <div class="toggle" id="mismatch" onclick="flip(this)"><span>📍 Location mismatch</span><span class="switch"></span></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>📱 Device trust score <span class="val" id="trust_v">60</span></label>
+        <input type="range" id="trust" min="0" max="100" value="60">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>⚡ Transactions in last 24h <span class="val" id="vel_v">2</span></label>
+          <input type="range" id="vel" min="0" max="15" value="2">
+        </div>
+        <div class="field">
+          <label>🎂 Cardholder age <span class="val" id="age_v">40</span></label>
+          <input type="range" id="age" min="18" max="90" value="40">
+        </div>
+      </div>
+
+      <button class="go" id="go" type="button" onclick="check()">🔍 Check transaction</button>
+      <div class="error" id="err"></div>
+    </section>
+
+    <!-- RESULT -->
+    <section class="card result">
+      <h2 style="justify-content:center">📊 Verdict</h2>
+      <div class="gauge">
+        <svg width="240" height="240" viewBox="0 0 240 240">
+          <circle class="track" cx="120" cy="120" r="100" fill="none" stroke-width="20"/>
+          <circle class="bar" id="bar" cx="120" cy="120" r="100" fill="none" stroke-width="20"
+                  stroke-linecap="round" stroke="#22d3ee" stroke-dasharray="628.32" stroke-dashoffset="628.32"/>
+        </svg>
+        <div class="gcenter"><div class="pct" id="pct">--</div><div class="plabel">fraud probability</div></div>
+      </div>
+      <div class="verdict idle" id="verdict">Waiting for a transaction…</div>
+      <div class="risk" id="risk">Risk level: <b>–</b></div>
+      <div class="factors" id="factors"></div>
+    </section>
+  </div>
+  <footer>Model predictions are estimates, not financial advice. Always verify suspicious activity with your bank.</footer>
+</div>
+
+<script>
+  const CATEGORIES = {{ meta.categories|tojson }};
+  const ICONS = {Food:"🍔", Clothing:"👗", Travel:"✈️", Grocery:"🛒", Electronics:"💻"};
+  let category = CATEGORIES[0];
+
+  const $ = id => document.getElementById(id);
+
+  // merchant chips
+  function drawChips(){
+    $("chips").innerHTML = "";
+    CATEGORIES.forEach(c => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (c === category ? " active" : "");
+      b.textContent = (ICONS[c] || "🏷️") + " " + c;
+      b.onclick = () => { category = c; drawChips(); };
+      $("chips").appendChild(b);
+    });
+  }
+  drawChips();
+
+  // sliders -> labels
+  const pad = n => String(n).padStart(2, "0");
+  $("hour").oninput = e => $("hour_v").textContent = pad(e.target.value) + ":00";
+  $("trust").oninput = e => $("trust_v").textContent = e.target.value;
+  $("vel").oninput = e => $("vel_v").textContent = e.target.value;
+  $("age").oninput = e => $("age_v").textContent = e.target.value;
+
+  function flip(el){ el.classList.toggle("on"); }
+  function setToggle(id, on){ $(id).classList.toggle("on", !!on); }
+
+  function setAll(v){
+    $("amount").value = v.amount;
+    $("hour").value = v.hour;  $("hour_v").textContent = pad(v.hour) + ":00";
+    $("trust").value = v.trust; $("trust_v").textContent = v.trust;
+    $("vel").value = v.vel;    $("vel_v").textContent = v.vel;
+    $("age").value = v.age;    $("age_v").textContent = v.age;
+    category = v.cat; drawChips();
+    setToggle("foreign", v.foreign); setToggle("mismatch", v.mismatch);
+  }
+
+  function preset(kind){
+    const c0 = CATEGORIES[0];
+    const pick = name => CATEGORIES.includes(name) ? name : c0;
+    if(kind === "safe")  setAll({amount:85.5, hour:14, cat:pick("Grocery"), foreign:0, mismatch:0, trust:80, vel:1, age:42});
+    if(kind === "sus")   setAll({amount:640, hour:3, cat:pick("Electronics"), foreign:1, mismatch:1, trust:30, vel:5, age:35});
+    if(kind === "reset") setAll({amount:120, hour:12, cat:c0, foreign:0, mismatch:0, trust:60, vel:2, age:40});
+    $("err").textContent = "";
+  }
+
+  function paint(prob, isFraud){
+    const C = 2 * Math.PI * 100;
+    const bar = $("bar");
+    bar.style.strokeDashoffset = C * (1 - Math.min(prob, 100) / 100);
+    bar.style.stroke = prob >= 60 ? "#ff4d6d" : prob >= 30 ? "#fbbf24" : "#34d399";
+  }
+
+  function factors(p){
+    const f = [];
+    if(p.foreign_transaction) f.push("🌍 Foreign transaction");
+    if(p.location_mismatch) f.push("📍 Location does not match the cardholder");
+    if(p.device_trust_score < 40) f.push("📱 Low device trust score (" + p.device_trust_score + ")");
+    if(p.velocity_last_24h >= 4) f.push("⚡ Many transactions in 24h (" + p.velocity_last_24h + ")");
+    if(p.transaction_hour <= 5) f.push("🌙 Late-night transaction (" + pad(p.transaction_hour) + ":00)");
+    if(p.amount >= 500) f.push("💰 High amount (" + p.amount + ")");
+    const box = $("factors");
+    box.innerHTML = "";
+    if(!f.length){ box.innerHTML = "<div>✨ Nothing unusual in the details you entered.</div>"; return; }
+    box.innerHTML = "<div style='background:none;padding:0;color:#f5f3ff;font-weight:700'>Things worth noting</div>" +
+      f.map(t => "<div>" + t + "</div>").join("");
+  }
+
+  async function check(){
+    $("err").textContent = "";
+    const payload = {
+      amount: parseFloat($("amount").value),
+      transaction_hour: parseInt($("hour").value, 10),
+      merchant_category: category,
+      foreign_transaction: $("foreign").classList.contains("on") ? 1 : 0,
+      location_mismatch: $("mismatch").classList.contains("on") ? 1 : 0,
+      device_trust_score: parseInt($("trust").value, 10),
+      velocity_last_24h: parseInt($("vel").value, 10),
+      cardholder_age: parseInt($("age").value, 10)
+    };
+    if(isNaN(payload.amount) || payload.amount < 0){
+      $("err").textContent = "Please enter a valid amount."; return;
+    }
+    const btn = $("go");
+    btn.disabled = true; btn.textContent = "Analysing…";
+    try{
+      const res = await fetch("/predict", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
+      const out = await res.json();
+      if(!res.ok){ $("err").textContent = out.error || "Something went wrong."; return; }
+
+      $("pct").textContent = out.probability + "%";
+      paint(out.probability, out.is_fraud);
+      const v = $("verdict");
+      v.className = "verdict " + (out.is_fraud ? "bad" : "ok");
+      v.textContent = out.is_fraud ? "🚨 FRAUD DETECTED" : "✅ Looks genuine";
+      $("risk").innerHTML = "Risk level: <b>" + out.risk_level + "</b>";
+      factors(payload);
+    }catch(e){
+      $("err").textContent = "Could not reach the server. Is app.py still running?";
+    }finally{
+      btn.disabled = false; btn.textContent = "🔍 Check transaction";
+    }
+  }
+</script>
+</body>
+</html>
