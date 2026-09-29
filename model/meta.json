@@ -1,0 +1,28 @@
+{
+  "features": [
+    "amount",
+    "transaction_hour",
+    "merchant_category",
+    "foreign_transaction",
+    "location_mismatch",
+    "device_trust_score",
+    "velocity_last_24h",
+    "cardholder_age"
+  ],
+  "categories": [
+    "Clothing",
+    "Electronics",
+    "Food",
+    "Grocery",
+    "Travel"
+  ],
+  "model_name": "Random Forest",
+  "threshold": 0.3,
+  "metrics": {
+    "accuracy": 0.991,
+    "precision": 0.625,
+    "recall": 1.0,
+    "f1": 0.7692,
+    "roc_auc": 0.9993
+  }
+}
